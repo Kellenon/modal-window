@@ -29,10 +29,10 @@ $(function() {
     };
 
     let setup = function() {
+        $(document).on(event.hideBsModal, selector.modalWindow, removeModalWindow);
         $(document).on(event.click, selector.modalWindowLink, stopProcess);
         $(document).on(event.click, selector.modalWindowLink, createModalWindow);
-        $(document).on(event.click, selector.modalWindowLink, $.throttle(2000, showModalWindow));
-        $(document).on(event.hideBsModal, selector.modalWindow, removeModalWindow);
+        $(document).on(event.click, selector.modalWindowLink, throttle(showModalWindow, 800));
     };
 
     let stopProcess = function() {
@@ -102,6 +102,7 @@ $(function() {
     };
 
     let showModalWindow = async function() {
+        console.log('sho modal winndow');
         try {
             let form = await $.ajax({
                 url: $(this).attr('href') ?? $(this).attr('data-modal-url'),
@@ -122,6 +123,38 @@ $(function() {
 
             removeModalWindow();
         }
+    };
+
+    let throttle = function throttle(callback, delay) {
+        let isWaiting = false;
+        let savedArgs;
+        let savedThis;
+
+        function wrapper() {
+
+            if (isWaiting) {
+                savedArgs = arguments;
+                savedThis = this;
+
+                return;
+            }
+
+            callback.apply(this, arguments);
+            isWaiting = true;
+
+            setTimeout(function() {
+                isWaiting = false;
+
+                if (savedArgs) {
+                    wrapper.apply(savedThis, savedArgs);
+                    savedArgs = savedThis = null;
+                }
+
+            }, delay);
+
+        }
+
+        return wrapper;
     };
 
     init();
