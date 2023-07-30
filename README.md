@@ -1,6 +1,7 @@
 <p align="center">
     <h1 align="center">Modal Window</h1>
     <h5 align="center">Simple AJAX Modal Window</h5>
+    <br>
 </p>
 
 Modal Windows is a Javascript library. jQuery is required. The goal is to create a simple ajax modal windows.
