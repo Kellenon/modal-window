@@ -3,6 +3,8 @@
     <h5 align="center">Simple AJAX Modal Window</h5>
 </p>
 
+Modal Windows is a Javascript library. jQuery is required. The goal is to create a simple ajax modal windows.
+
 ## Usage
 
 ### Example
