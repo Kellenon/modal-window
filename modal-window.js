@@ -102,7 +102,6 @@ $(function() {
     };
 
     let showModalWindow = async function() {
-        console.log('sho modal winndow');
         try {
             let form = await $.ajax({
                 url: $(this).attr('href') ?? $(this).attr('data-modal-url'),
