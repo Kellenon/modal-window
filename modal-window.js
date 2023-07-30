@@ -1,14 +1,14 @@
 $(function() {
-    let config = {
+    const config = {
         namespace: 'modalWindowNamespace',
     };
 
-    let event = {
+    const event = {
         click: 'click.' + config.namespace,
         hideBsModal: 'hide.bs.modal.' + config.namespace,
     };
 
-    let selector = {
+    const selector = {
         body: 'body',
         modalWindow: '#modal-window',
         modelWindowHeader: '#modal-window-header',
@@ -19,20 +19,22 @@ $(function() {
         modalWindowCloseBtn: '#modal-window-close-btn',
     };
 
+    let isWaiting = false;
+
     let init = function() {
         unbindEvents();
-        setup();
+        bindEvents();
     };
 
     let unbindEvents = function() {
         $(document).off('.' + config.namespace);
     };
 
-    let setup = function() {
+    let bindEvents = function() {
         $(document).on(event.hideBsModal, selector.modalWindow, removeModalWindow);
         $(document).on(event.click, selector.modalWindowLink, stopProcess);
         $(document).on(event.click, selector.modalWindowLink, createModalWindow);
-        $(document).on(event.click, selector.modalWindowLink, throttle(showModalWindow, 800));
+        $(document).on(event.click, selector.modalWindowLink, showModalWindow);
     };
 
     let stopProcess = function() {
@@ -103,9 +105,14 @@ $(function() {
 
     let showModalWindow = async function() {
         try {
+            if (isWaiting) {
+                return;
+            }
+
+            isWaiting = true;
             let form = await $.ajax({
                 url: $(this).attr('href') ?? $(this).attr('data-modal-url'),
-                dataType: 'json',
+                dataType: 'JSON',
                 type: 'GET',
                 headers: {
                     'Access-Control-Allow-Origin': '*',
@@ -119,41 +126,10 @@ $(function() {
             $(selector.modalWindow).modal('show');
         } catch (error) {
             console.log(error);
-
             removeModalWindow();
         }
-    };
 
-    let throttle = function throttle(callback, delay) {
-        let isWaiting = false;
-        let savedArgs;
-        let savedThis;
-
-        function wrapper() {
-
-            if (isWaiting) {
-                savedArgs = arguments;
-                savedThis = this;
-
-                return;
-            }
-
-            callback.apply(this, arguments);
-            isWaiting = true;
-
-            setTimeout(function() {
-                isWaiting = false;
-
-                if (savedArgs) {
-                    wrapper.apply(savedThis, savedArgs);
-                    savedArgs = savedThis = null;
-                }
-
-            }, delay);
-
-        }
-
-        return wrapper;
+        isWaiting = false;
     };
 
     init();

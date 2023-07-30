@@ -4,7 +4,7 @@
     <br>
 </p>
 
-Modal Windows is a Javascript library. jQuery is required. The goal is to create a simple ajax modal windows.
+Modal Windows is a Javascript library. [jQuery](https://jquery.com/) and [bootstrap 3 or 4](https://getbootstrap.com/) is required. The goal is to create a simple ajax modal windows.
 
 ## Usage
 
