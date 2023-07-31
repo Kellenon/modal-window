@@ -1,4 +1,9 @@
-<p align="center">
+<div>
+    <p align="center">
+        <a href="https://github.com/Kellenon/modal-window" target="_blank">
+            <img src="https://github-production-user-asset-6210df.s3.amazonaws.com/48764983/257301874-39943b34-1336-4699-9228-0b36846d8ce0.png" width="150" alt="Yii Framework" />
+        </a>
+    </p>
     <h1 align="center">Modal Window</h1>
     <h5 align="center">Simple AJAX Modal Window</h5>
     <br>
