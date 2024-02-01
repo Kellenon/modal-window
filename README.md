@@ -27,6 +27,6 @@ It is necessary to specify the `modal-window-link` class in the button and decla
 
 ### Attributes
 
-- data-modal-url - URL to the form to be rendered. Warning! URL must be absolute.
+- data-modal-url - URL to the form to be rendered.
 - data-modal-title - Modal window title.
 - data-modal-attributes - Get params.
