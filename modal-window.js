@@ -104,32 +104,40 @@ $(function() {
     };
 
     let showModalWindow = async function() {
-        try {
-            if (isWaiting) {
-                return;
-            }
+        if (isWaiting) {
+            return;
+        }
 
-            isWaiting = true;
-            let form = await $.ajax({
+        isWaiting = true;
+
+        try {
+            $.ajax({
                 url: $(this).attr('href') ?? $(this).attr('data-modal-url'),
-                dataType: 'JSON',
-                type: 'GET',
+                method: 'GET',
                 headers: {
                     'Access-Control-Allow-Origin': '*',
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
                 data: $(this).attr('data-modal-attributes') ?? {},
+                beforeSend: function() {
+                    $(selector.modalWindowBody).empty();
+                },
+                success: function(form) {
+                    $(selector.modalWindowBody).html(form);
+                    $(selector.modalWindow).modal('show');
+                },
+                error: function() {
+                    removeModalWindow();
+                },
+                complete: function() {
+                    isWaiting = false;
+                },
             });
-
-            $(selector.modalWindowBody).empty();
-            $(selector.modalWindowBody).append(form);
-            $(selector.modalWindow).modal('show');
         } catch (error) {
             console.log(error);
+            isWaiting = false;
             removeModalWindow();
         }
-
-        isWaiting = false;
     };
 
     init();
