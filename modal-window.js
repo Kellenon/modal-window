@@ -1,4 +1,4 @@
-$(function() {
+let modalWindow = (function($) {
     const config = {
         namespace: 'modalWindowNamespace',
     };
@@ -11,6 +11,7 @@ $(function() {
     const selector = {
         body: 'body',
         modalWindow: '#modal-window',
+        modalWindowDialog: '#modal-window-dialog',
         modelWindowHeader: '#modal-window-header',
         modelWindowTitle: '#modal-window-title',
         modalWindowContent: '#modal-window-content',
@@ -19,9 +20,18 @@ $(function() {
         modalWindowCloseBtn: '#modal-window-close-btn',
     };
 
+    let params = {
+        bsVersion: 4,
+    };
+
+    let loader = undefined;
+
+    let currenSize = null;
+
     let isWaiting = false;
 
-    let init = function() {
+    let init = function(inParams) {
+        $.extend(params, inParams || {});
         unbindEvents();
         bindEvents();
     };
@@ -31,9 +41,9 @@ $(function() {
     };
 
     let bindEvents = function() {
-        $(document).on(event.hideBsModal, selector.modalWindow, removeModalWindow);
+        $(document).ready(createModalWindow);
+        $(document).on(event.hideBsModal, selector.modalWindow, hideModalWindow);
         $(document).on(event.click, selector.modalWindowLink, stopProcess);
-        $(document).on(event.click, selector.modalWindowLink, createModalWindow);
         $(document).on(event.click, selector.modalWindowLink, showModalWindow);
     };
 
@@ -47,17 +57,15 @@ $(function() {
                 return;
             }
 
-            let bsVersion = $(this).attr('data-bs-version') ?? 3;
-
             let modalForm;
 
-            if (bsVersion >= 4) {
+            if (params.bsVersion >= 4) {
                 modalForm =
                     '<div id="' + selector.modalWindow.substring(1) + '" class="modal fade" tabindex="-1" role="dialog">' +
-                    '  <div class="modal-dialog" role="document">' +
+                    '  <div id="' + selector.modalWindowDialog.substring(1) + '" class="modal-dialog" role="document">' +
                     '    <div id="' + selector.modalWindowContent.substring(1) + '" class="modal-content">' +
                     '      <div id="' + selector.modelWindowHeader.substring(1) + '" class="modal-header">' +
-                    '        <h4 id="' + selector.modelWindowTitle.substring(1) + '" class="modal-title">' + ($(this).attr('data-modal-title') ?? '') + '</h4>' +
+                    '        <h4 id="' + selector.modelWindowTitle.substring(1) + '" class="modal-title">' + '' + '</h4>' +
                     '        <button id="' + selector.modalWindowCloseBtn.substring(1) + '" type="button" class="close" data-dismiss="modal" aria-label="Close">' +
                     '          <span aria-hidden="true">&times;</span>' +
                     '        </button>' +
@@ -70,13 +78,13 @@ $(function() {
             } else {
                 modalForm =
                     '<div id="' + selector.modalWindow.substring(1) + '" class="modal fade" tabindex="-1" role="dialog">' +
-                    '  <div class="modal-dialog" role="document">' +
+                    '  <div id="' + selector.modalWindowDialog.substring(1) + '" class="modal-dialog" role="document">' +
                     '    <div id="' + selector.modalWindowContent.substring(1) + '" class="modal-content">' +
                     '      <div id="' + selector.modelWindowHeader.substring(1) + '" class="modal-header">' +
                     '        <button id="' + selector.modalWindowCloseBtn.substring(1) + '" type="button" class="close" data-dismiss="modal" aria-label="Close">' +
                     '          <span aria-hidden="true">&times;</span>' +
                     '        </button>' +
-                    '        <h4 id="' + selector.modelWindowTitle.substring(1) + '" class="modal-title">' + ($(this).attr('data-modal-title') ?? '') + '</h4>' +
+                    '        <h4 id="' + selector.modelWindowTitle.substring(1) + '" class="modal-title">' + '' + '</h4>' +
                     '      </div>' +
                     '      <div id="' + selector.modalWindowBody.substring(1) + '" class="modal-body">' +
                     '      </div>' +
@@ -91,19 +99,52 @@ $(function() {
         }
     };
 
-    let removeModalWindow = function() {
-        let modalWindow = $(selector.modalWindow) ?? null;
+    let hideModalWindow = function(event) {
+        clearModalWindowBody();
+        setTitleModalWindow(event, '');
+        setTimeout(() => setSizeModalWindow(event), 200);
+    };
 
-        if (null === modalWindow) {
+    let showModalWindow = function(event) {
+        setSizeModalWindow(event, $(this).attr('data-modal-size') ?? null);
+        setTitleModalWindow(event, $(this).attr('data-modal-title') ?? '');
+        fillModalBody(event, {
+            url: $(this).attr('href') ?? $(this).attr('data-modal-url'),
+            attributes: $(this).attr('data-modal-attributes') ?? {},
+        });
+    };
+
+    let setSizeModalWindow = function(event, size = null) {
+        let modalWindowDialog = $(selector.modalWindowDialog);
+
+        if (size) {
+            modalWindowDialog.addClass(size);
+            currenSize = size;
+        } else {
+            modalWindowDialog.removeClass(currenSize);
+            currenSize = null;
+        }
+    };
+
+    let setTitleModalWindow = function(event, titleText = '') {
+        let modalWindowTitle = $(selector.modelWindowTitle) ?? null;
+
+        if (!modalWindowTitle) {
             return;
         }
 
-        setTimeout(function() {
-            modalWindow.remove();
-        }, 200);
+        modalWindowTitle.text(titleText ?? '');
     };
 
-    let showModalWindow = async function() {
+    let setLoader = function(inLoader) {
+        if (!(typeof inLoader === 'function')) {
+            return;
+        }
+
+        loader = inLoader;
+    }
+
+    let fillModalBody = function(event, data) {
         if (isWaiting) {
             return;
         }
@@ -112,22 +153,33 @@ $(function() {
 
         try {
             $.ajax({
-                url: $(this).attr('href') ?? $(this).attr('data-modal-url'),
+                url: data.url,
                 method: 'GET',
                 headers: {
                     'Access-Control-Allow-Origin': '*',
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                data: $(this).attr('data-modal-attributes') ?? {},
+                data: data.attributes,
                 beforeSend: function() {
-                    $(selector.modalWindowBody).empty();
-                },
-                success: function(form) {
-                    $(selector.modalWindowBody).html(form);
+                    clearModalWindowBody();
+
+                    try {
+                        if (typeof loader === 'function') {
+                            loader(selector.modalWindowBody);
+                        }
+                    } catch (error) {
+                        console.log(error);
+                    }
+
                     $(selector.modalWindow).modal('show');
                 },
-                error: function() {
-                    removeModalWindow();
+                success: function(data) {
+                    $(selector.modalWindowBody).html(data);
+                },
+                error: function(jqXHR) {
+                    if (jqXHR.status === 404) {
+                        $(selector.modalWindowBody).html('<h1 style="text-align: center">404</h1>');
+                    }
                 },
                 complete: function() {
                     isWaiting = false;
@@ -136,9 +188,21 @@ $(function() {
         } catch (error) {
             console.log(error);
             isWaiting = false;
-            removeModalWindow();
         }
     };
 
-    init();
-});
+    let clearModalWindowBody = function() {
+        let modalWindowBody = $(selector.modalWindowBody) ?? null;
+
+        if (null === modalWindowBody) {
+            return;
+        }
+
+        modalWindowBody.empty();
+    };
+
+    return {
+        init: init,
+        setLoader: setLoader,
+    };
+})(jQuery);
